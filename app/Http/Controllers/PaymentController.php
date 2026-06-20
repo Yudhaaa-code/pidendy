@@ -9,6 +9,17 @@ use Illuminate\Support\Facades\Storage;
 
 class PaymentController extends Controller
 {
+	private function findUserTransactionOrFail($id): Transaction
+	{
+		$transaction = Transaction::findOrFail($id);
+
+		if ($transaction->user_id !== auth()->id()) {
+			abort(403);
+		}
+
+		return $transaction;
+	}
+
 	public function checkout(Request $request)
 	{
 		$product = Product::findOrFail($request->query('product_id'));
@@ -37,6 +48,7 @@ class PaymentController extends Controller
 
 		// Buat transaksi baru saat user benar-benar submit
 		$transaction = Transaction::create([
+			'user_id' => auth()->id(),
 			'product_id' => $product->id,
 			'invoice_number' => 'INV-' . time(),
 			'total_amount' => $product->price + 20000,
@@ -62,13 +74,13 @@ class PaymentController extends Controller
 
 	public function uploadForm($id)
 	{
-		$transaction = Transaction::findOrFail($id);
+		$transaction = $this->findUserTransactionOrFail($id);
 		return view('payment.upload', compact('transaction'));
 	}
 
 	public function upload(Request $request, $id)
 	{
-		$transaction = Transaction::findOrFail($id);
+		$transaction = $this->findUserTransactionOrFail($id);
 		
 		$request->validate([
 			'payment_proof' => 'required|image|mimes:jpg,jpeg,png|max:2048',
@@ -87,13 +99,13 @@ class PaymentController extends Controller
 
 	public function waiting($id)
 	{
-		$transaction = Transaction::findOrFail($id);
+		$transaction = $this->findUserTransactionOrFail($id);
 		return view('payment.waiting', compact('transaction'));
 	}
 
 	public function check($id)
 	{
-		$transaction = Transaction::findOrFail($id);
+		$transaction = $this->findUserTransactionOrFail($id);
 		$redirect = null;
 		if ($transaction->status === 'paid') {
 			$redirect = route('payment.success', $transaction->id);
@@ -108,7 +120,7 @@ class PaymentController extends Controller
 
 	public function success($id)
 	{
-		$transaction = Transaction::findOrFail($id);
+		$transaction = $this->findUserTransactionOrFail($id);
 		return view('payment.success', compact('transaction'));
 	}
 }

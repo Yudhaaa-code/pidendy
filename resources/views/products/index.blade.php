@@ -17,6 +17,15 @@
                 <a href="/products" class="hover:text-amber-200">Produk</a>
                 <a href="#" class="hover:text-amber-200">Tentang</a>
                 <a href="#" class="hover:text-amber-200">Kontak</a>
+                @auth
+                    <a href="{{ route('my-transactions.index') }}" class="hover:text-amber-200">Riwayat</a>
+                    <form action="{{ route('logout') }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="hover:text-amber-200">Logout</button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}" class="hover:text-amber-200">Login</a>
+                @endauth
             </div>
         </div>
     </nav>
